@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper Berita Sampang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen py-10 px-4 sm:px-6">
+
+    <div class="max-w-5xl mx-auto bg-white p-6 sm:p-10 rounded-2xl shadow-xl border border-slate-100">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight flex items-center justify-center gap-2">
+                <span>📰</span> Scraping Berita Sampang
+            </h1>
+            <p class="text-slate-500 mt-2 text-sm sm:text-base">
+                Masukkan beberapa kata kunci untuk mengumpulkan berita terbaru dari Kabupaten Sampang.
+            </p>
+        </header>
+
+        <!-- Form Scraper -->
+        <form action="/scrape" method="POST" class="space-y-6 mb-10">
+            <!-- Keyword Input -->
+            <div>
+                <label for="keywords" class="block text-sm font-semibold text-slate-700 mb-2">
+                    Kata Kunci Berita (Multi-input):
+                </label>
+                <textarea 
+                    id="keywords" 
+                    name="keywords" 
+                    rows="4" 
+                    class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm sm:text-base resize-y"
+                    placeholder="Contoh:&#10;Pilkada Sampang&#10;Kasus Kriminal&#10;Pembangunan Infrastruktur" 
+                    required
+                >{{ keywords if keywords else '' }}</textarea>
+                <span class="block mt-1 text-xs text-slate-400">Setiap baris atau pisahkan dengan koma akan dianggap sebagai kata kunci terpisah.</span>
+            </div>
+
+            <!-- Filter Grid: Bulan & Tahun -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5">
+                <!-- Filter Bulan -->
+                <div>
+                    <label for="month" class="block text-sm font-semibold text-slate-800 mb-1">Filter Bulan</label>
+                    <select id="month" name="month" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700">
+                        <option value="all" {% if selected_month == 'all' %}selected{% endif %}>Semua Bulan</option>
+                        <option value="1" {% if selected_month == '1' %}selected{% endif %}>Januari</option>
+                        <option value="2" {% if selected_month == '2' %}selected{% endif %}>Februari</option>
+                        <option value="3" {% if selected_month == '3' %}selected{% endif %}>Maret</option>
+                        <option value="4" {% if selected_month == '4' %}selected{% endif %}>April</option>
+                        <option value="5" {% if selected_month == '5' %}selected{% endif %}>Mei</option>
+                        <option value="6" {% if selected_month == '6' %}selected{% endif %}>Juni</option>
+                        <option value="7" {% if selected_month == '7' %}selected{% endif %}>Juli</option>
+                        <option value="8" {% if selected_month == '8' %}selected{% endif %}>Agustus</option>
+                        <option value="9" {% if selected_month == '9' %}selected{% endif %}>September</option>
+                        <option value="10" {% if selected_month == '10' %}selected{% endif %}>Oktober</option>
+                        <option value="11" {% if selected_month == '11' %}selected{% endif %}>November</option>
+                        <option value="12" {% if selected_month == '12' %}selected{% endif %}>Desember</option>
+                    </select>
+                </div>
+                <!-- Filter Tahun -->
+                <div>
+                    <label for="year" class="block text-sm font-semibold text-slate-800 mb-1">Filter Tahun</label>
+                    <select id="year" name="year" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700">
+                        {% for y in dynamic_years %}
+                        <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Limit Setting Card -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5">
+                <div>
+                    <label for="max_results" class="block text-sm font-semibold text-slate-800">
+                        Maksimal Berita per Kata Kunci
+                    </label>
+                    <span class="text-xs text-slate-500">Ketik angka bebas atau pilih "Semua" untuk mengambil seluruh berita tanpa batas.</span>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <!-- Stepper (- / +) -->
+                    <div class="inline-flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-sm">
+                        <button type="button" onclick="stepLimit(-5)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 font-bold transition text-sm">−</button>
+                        <input 
+                            type="number" 
+                            id="max_results" 
+                            name="max_results" 
+                            min="0"
+                            value="{{ max_results if max_results else 10 }}" 
+                            class="w-14 text-center font-bold text-blue-600 outline-none text-sm appearance-none"
+                            placeholder="Bebas"
+                            required
+                        >
+                        <button type="button" onclick="stepLimit(5)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 font-bold transition text-sm">+</button>
+                    </div>
+
+                    <!-- Preset Pills -->
+                    <div class="flex gap-1.5">
+                        <button type="button" onclick="setLimit(10)" class="bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-600 text-xs font-semibold px-2.5 py-2 rounded-lg transition shadow-sm">10</button>
+                        <button type="button" onclick="setLimit(25)" class="bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-600 text-xs font-semibold px-2.5 py-2 rounded-lg transition shadow-sm">25</button>
+                        <button type="button" onclick="setLimit(50)" class="bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-600 text-xs font-semibold px-2.5 py-2 rounded-lg transition shadow-sm">50</button>
+                        <button type="button" onclick="setLimit(0)" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm">🌐 Ambil Semua</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2">
+                <span>🚀</span> Mulai Crawling Berita
+            </button>
+        </form>
+
+        <!-- Results Section -->
+        {% if searched %}
+        <section class="border-t border-slate-200 pt-8 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h2 class="text-xl font-bold text-slate-800">
+                    Hasil Pencarian <span class="text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full text-sm font-semibold ml-1">{{ results|length }} ditemukan</span>
+                </h2>
+                
+                {% if results %}
+                <form action="/export" method="POST" class="flex flex-wrap gap-2">
+                    <input type="hidden" name="data_json" value="{{ results_json }}">
+                    <button type="submit" name="format" value="excel" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-1.5">
+                        <span>📊</span> Export Excel
+                    </button>
+                    <button type="submit" name="format" value="csv" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-1.5">
+                        <span>📄</span> Export CSV
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+            
+            {% if results %}
+                <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
+                    <table class="w-full border-collapse text-left text-sm">
+                        <thead class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="p-3.5 text-center w-12">No</th>
+                                <th class="p-3.5 w-36">Kata Kunci</th>
+                                <th class="p-3.5 w-1/3">Judul</th>
+                                <th class="p-3.5">Deskripsi / Isi Berita</th>
+                                <th class="p-3.5 w-28 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white">
+                            {% for item in results %}
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 text-center text-slate-500 font-medium">{{ loop.index }}</td>
+                                <td class="p-3.5">
+                                    <span class="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-100">
+                                        {{ item.keyword }}
+                                    </span>
+                                </td>
+                                <td class="p-3.5 font-semibold text-slate-900">{{ item.title }}</td>
+                                <td class="p-3.5 text-slate-600">
+                                    <div class="max-h-36 overflow-y-auto pr-1 whitespace-pre-line text-xs leading-relaxed">
+                                        {{ item.snippet }}
+                                    </div>
+                                </td>
+                                <td class="p-3.5 text-center">
+                                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">
+                                        Buka <span>↗</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-center text-sm">
+                    Tidak ada berita ditemukan untuk kata kunci dan filter waktu tersebut.
+                </div>
+            {% endif %}
+        </section>
+        {% endif %}
+    </div>
+
+    <script>
+        function setLimit(val) {
+            document.getElementById('max_results').value = val;
+        }
+
+        function stepLimit(delta) {
+            const input = document.getElementById('max_results');
+            let current = parseInt(input.value) || 10;
+            let next = Math.min(100, Math.max(1, current + delta));
+            input.value = next;
+        }
+    </script>
+</body>
+</html>
