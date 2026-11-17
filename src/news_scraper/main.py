@@ -5,14 +5,16 @@ import pandas as pd
 from datetime import datetime
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from news_scraper.scraper import scrape_news
 
-app = FastAPI(title="Web Scraper Berita Sampang")
+app = FastAPI(title="Web Scraper Berita")
 
 BASE_DIR = Path(__file__).resolve().parent
 
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Buat daftar tahun secara dinamis (misal dari 2020 sampai tahun berjalan)
