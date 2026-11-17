@@ -5,17 +5,18 @@ Aplikasi web FastAPI untuk *scraping* berita regional Kabupaten Sampang mengguna
 git clone <url-repository-anda>
 cd news-scraper
 
-### create virtual environment using pip
+## create virtual environment using pip
 python -m venv .venv
-# Windows:
+### Windows:
 .venv\Scripts\activate
-# Mac/Linux:
+### Mac/Linux:
 source .venv/bin/activate
-## install dependencies
+### install dependencies
 pip install -r requirements.txt 
-## run
+### run
 uvicorn src.news_scraper.main:app --reload
 
-### create virtual environment using uv
+## create virtual environment using uv
 uv sync
+### run
 uv run uvicorn news_scraper.main:app --reload
