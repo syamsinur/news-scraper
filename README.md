@@ -2,7 +2,7 @@
 Aplikasi web FastAPI untuk *scraping* berita regional Kabupaten Sampang menggunakan Google News RSS dan `trafilatura`.
 
 ## clone project
-git clone [<url-repository-anda>](https://github.com/syamsinur/news-scraper.git)
+git clone https://github.com/syamsinur/news-scraper.git
 cd news-scraper
 
 ## create virtual environment using pip
