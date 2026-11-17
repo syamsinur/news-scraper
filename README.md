@@ -3,7 +3,9 @@ Aplikasi web FastAPI untuk *scraping* berita regional Kabupaten Sampang mengguna
 
 ## clone project
 git clone https://github.com/syamsinur/news-scraper.git
-\ncd news-scraper
+
+## cd directory
+cd news-scraper
 
 ## create virtual environment using pip
 python -m venv .venv
